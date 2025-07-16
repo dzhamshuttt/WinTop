@@ -1,3 +1,5 @@
+screenshots 1 https://drive.google.com/file/d/1WNr4S37DhOF1Nfj9hI_BV9HEiRV-52C_/view?usp=drive_link
+screenshots 2 https://drive.google.com/file/d/16rk7BFTxjUrmBBXMz03lLrlyhY7M6WQM/view?usp=drive_link
 # WinTop
 this is an open source program written in python, more precisely it is a custom task manager like process hacker and htop
 --------------------------------------------------------------------------------------------------------------------------------
