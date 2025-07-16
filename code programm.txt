@@ -1,0 +1,236 @@
+mport os
+import time
+import psutil
+from collections import deque
+import curses
+
+class WinTop:
+    def __init__(self):
+        self.screen = None
+        self.colors = {
+            'default': 1,
+            'header': 2,
+            'cpu_bar': 3,
+            'mem_bar': 4,
+            'process': 5,
+            'highlight': 6,
+            'warning': 0
+        }
+        self.sort_key = 'cpu_percent'
+        self.sort_reverse = True
+        self.selected_pid = None
+        self.selected_index = 0
+        self.history_length = 10
+        self.cpu_history = deque(maxlen=self.history_length)
+        self.mem_history = deque(maxlen=self.history_length)
+        self.update_interval = 0.1
+        self.process_list = []
+        
+    def init_colors(self):
+        curses.start_color()
+        curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
+        curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_CYAN, curses.COLOR_BLACK)
+        curses.init_pair(4, curses.COLOR_WHITE, curses.COLOR_BLACK)
+        curses.init_pair(5, curses.COLOR_BLACK, curses.COLOR_WHITE)
+        curses.init_pair(6, curses.COLOR_RED, curses.COLOR_BLACK)
+ 
+    def get_processes(self):
+        processes = []
+        for proc in psutil.process_iter(['pid', 'name', 'username', 'cpu_percent', 'memory_percent', 'status']):
+            try:
+                if proc.is_running():
+                    processes.append(proc)
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
+        return processes
+        
+    def draw_header(self, width):
+        header = f"WinTop - PID: {os.getpid()} | Refresh: {self.update_interval}s | Processes: {len(psutil.pids())}"
+        try:
+            self.screen.addstr(0, 0, header.ljust(width), curses.color_pair(self.colors['header']))
+        except curses.error:
+            pass
+        
+    def draw_system_stats(self, width, height):
+        cpu_percent = psutil.cpu_percent(interval=None)
+        self.cpu_history.append(cpu_percent)
+        cpu_avg = sum(self.cpu_history) / len(self.cpu_history) if self.cpu_history else 0
+        
+        cpu_line = f"CPU: {cpu_percent:5.1f}% ["
+        bar_width = width - len(cpu_line) - 18
+        filled = max(0, min(bar_width, int(bar_width * cpu_percent / 100)))
+        cpu_line += '|' * filled + ' ' * (bar_width - filled) + f"] Avg: {cpu_avg:5.1f}%"
+        try:
+            self.screen.addstr(1, 0, cpu_line, curses.color_pair(self.colors['cpu_bar']))
+        except curses.error:
+            pass
+        
+        mem = psutil.virtual_memory()
+        mem_percent = mem.percent
+        self.mem_history.append(mem_percent)
+        mem_avg = sum(self.mem_history) / len(self.mem_history) if self.mem_history else 0
+        
+        mem_line = f"MEM: {mem_percent:5.1f}% ["
+        filled = max(0, min(bar_width, int(bar_width * mem_percent / 100)))
+        mem_line += '|' * filled + ' ' * (bar_width - filled) + f"] Avg: {mem_avg:5.1f}%"
+        try:
+            self.screen.addstr(2, 0, mem_line, curses.color_pair(self.colors['mem_bar']))
+        except curses.error:
+            pass
+        
+        boot_time = psutil.boot_time()
+        uptime = time.time() - boot_time
+        hours, remainder = divmod(uptime, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        uptime_str = f"{int(hours):02d}:{int(minutes):02d}:{int(seconds):02d}"
+        
+        info_line = f"Uptime: {uptime_str} | Threads: {psutil.cpu_count()} | "
+        info_line += f"Used: {mem.used//(1024*1024):d}M | Free: {mem.free//(1024*1024):d}M"
+        try:
+            self.screen.addstr(3, 0, info_line.ljust(width))
+        except curses.error:
+            pass
+        
+        return 4  
+        
+    def draw_process_list(self, start_line, width, height):
+        self.process_list = self.get_processes()
+        
+        try:
+            self.process_list.sort(key=lambda p: p.info[self.sort_key], reverse=self.sort_reverse)
+        except (KeyError, AttributeError):
+            self.process_list.sort(key=lambda p: p.info['pid'], reverse=False)
+        
+        header = f"{'PID':>6} {'USER PC':<12} {'CPU%':>6} {'MEM%':>6} {'Status':<8} {'Name Process':<20}"
+        try:
+            self.screen.addstr(start_line, 0, header, curses.color_pair(self.colors['header']))
+        except curses.error:
+            pass
+        start_line += 1
+        
+        max_processes = height - start_line - 1
+        if max_processes <= 0:
+            return
+            
+        if not self.selected_pid and self.process_list:
+            self.selected_pid = self.process_list[0].info['pid']
+        
+        for i, proc in enumerate(self.process_list[:max_processes]):
+            try:
+                pid = proc.info['pid']
+                user = proc.info['username'][:12] if proc.info['username'] else 'SYSTEM'
+                cpu = proc.info['cpu_percent']
+                mem = proc.info['memory_percent']
+                status = proc.info['status'][:8]
+                name = proc.info['name'][:20]
+                
+                color = self.colors['warning'] if cpu > 50 or mem > 10 else self.colors['process']
+                if pid == self.selected_pid:
+                    color = self.colors['highlight']
+                    self.selected_index = i
+                    
+                line = f"{pid:6d} {user:<12} {cpu:6.1f} {mem:6.1f} {status:<8} {name:<20}"
+                try:
+                    self.screen.addstr(start_line + i, 0, line, curses.color_pair(color))
+                except curses.error:
+                    pass
+            except (KeyError, AttributeError):
+                continue
+            
+        footer = f"↑/↓: Scroll | F1: Help | F5: Refresh| |telegramm user: dzhamshuttt | | F9: Kill | F10: Quit(F) | Sort: {self.sort_key}"
+        try:
+            self.screen.addstr(height-1, 0, footer.ljust(width), curses.color_pair(self.colors['header']))
+        except curses.error:
+            pass
+        
+    def handle_input(self):
+        try:
+            key = self.screen.getch()
+        except:
+            return True
+            
+        if key == ord('f') or key == curses.KEY_F10:
+            return False
+        elif key == curses.KEY_UP:
+            if self.selected_index > 0 and self.process_list:
+                self.selected_index -= 1
+                self.selected_pid = self.process_list[self.selected_index].info['pid']
+        elif key == curses.KEY_DOWN:
+            if self.selected_index < len(self.process_list) - 1 and self.process_list:
+                self.selected_index += 1
+                self.selected_pid = self.process_list[self.selected_index].info['pid']
+        elif key == curses.KEY_F5:
+            pass  
+        elif key == curses.KEY_F9 and self.selected_pid:
+            try:
+                proc = psutil.Process(self.selected_pid)
+                proc.terminate()
+                self.selected_pid = None
+                self.selected_index = 0
+            except:
+                pass
+        elif key == ord('c'):
+            self.sort_key = 'cpu_percent'
+            self.sort_reverse = True
+        elif key == ord('m'):
+            self.sort_key = 'memory_percent'
+            self.sort_reverse = True
+        elif key == ord('p'):
+            self.sort_key = 'pid'
+            self.sort_reverse = False
+        elif key == ord('n'):
+            self.sort_key = 'name'
+            self.sort_reverse = False
+        elif key == ord('+'):
+            self.update_interval = min(5.0, self.update_interval + 0.1)
+        elif key == ord('-'):
+            self.update_interval = max(0.1, self.update_interval - 0.1)
+            
+        return True
+        
+    def run(self):
+        try:
+            self.screen = curses.initscr()
+            curses.noecho()
+            curses.cbreak()
+            curses.curs_set(0)
+            self.screen.keypad(True)
+            self.screen.nodelay(True)
+            self.init_colors()
+            
+            running = True
+            while running:
+                try:
+                    height, width = self.screen.getmaxyx()
+                    if height < 10 or width < 40:
+                        time.sleep(self.update_interval)
+                        continue
+                        
+                    self.screen.clear()
+                    
+                    self.draw_header(width)
+                    lines_used = self.draw_system_stats(width, height)
+                    self.draw_process_list(lines_used, width, height)
+                    
+                    self.screen.refresh()
+                    running = self.handle_input()
+                    time.sleep(self.update_interval)
+                except KeyboardInterrupt:
+                    running = False
+                except curses.error:
+                    time.sleep(self.update_interval)
+                    continue
+                
+        finally:
+            try:
+                curses.nocbreak()
+                self.screen.keypad(True)
+                curses.echo()
+                curses.endwin()
+            except:
+                pass
+
+if __name__ == "__main__":
+    wintop = WinTop()
+    wintop.run()
