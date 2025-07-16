@@ -1,10 +1,10 @@
 screenshots 1 https://drive.google.com/file/d/1WNr4S37DhOF1Nfj9hI_BV9HEiRV-52C_/view?usp=drive_link
 screenshots 2 https://drive.google.com/file/d/16rk7BFTxjUrmBBXMz03lLrlyhY7M6WQM/view?usp=drive_link
-# WinTop
-# EN
-this is an open source program written in python, more precisely it is a custom task manager like process hacker and htop
+# 🖥️WinTop
+# 🇬🇧EN
+this is an 🔓open source program written in python, more precisely it is a custom task manager like process hacker and htop
 *
-the program was made in several days in python I will tell you a little about the process of creating this program
+the 👨‍💻program was made in several days in python I will tell you a little about the process of creating this program
 to create it I needed the psutil library to be honest I used a neural network
 and then for more than 2 days I changed the variables of the expansion of the number
 of calculations I changed the interface in the code I also used different forums of python programmers 
@@ -20,13 +20,13 @@ then I tried to ask for help on different programmer forums so that they would c
 Well, today I started uploading my repository to the vastness of GitHub
 I embellished it even better, packed it into an installer, and now I am writing this read me file
 ------------------------------------------------------------------------------------------------------------------------------
-я опубликую файл rar что бы вам было проще разобраться в моей программе
-всем досвидания by Dzhamshuttt
+я 🌐опубликую файл rar что бы вам было проще разобраться в моей программе
+всем досвидания👋 by Dzhamshuttt
 ---------------------------------------------------------------------------------------------------
 #######################################################################################################################
-# ВинТоп
-# RU
-это программа с открытым исходным кодом, написанная на python, точнее, это пользовательский менеджер задач, такой как process hacker и htop
+# 🖥️ВинТоп
+# 🇷🇺RU
+это программа с 🔓открытым исходным кодом, написанная на python, точнее, это пользовательский менеджер задач, такой как 👨‍💻process hacker и htop
 *
 программа была сделана за несколько дней на python Я расскажу вам немного о процессе создания этой программы
 для ее создания мне понадобилась библиотека psutil честно говоря я использовал нейронную сеть
