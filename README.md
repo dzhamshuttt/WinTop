@@ -2,7 +2,7 @@ screenshots 1 https://drive.google.com/file/d/1WNr4S37DhOF1Nfj9hI_BV9HEiRV-52C_/
 screenshots 2 https://drive.google.com/file/d/16rk7BFTxjUrmBBXMz03lLrlyhY7M6WQM/view?usp=drive_link
 # WinTop
 this is an open source program written in python, more precisely it is a custom task manager like process hacker and htop
---------------------------------------------------------------------------------------------------------------------------------
+*
 the program was made in several days in python I will tell you a little about the process of creating this program
 to create it I needed the psutil library to be honest I used a neural network
 and then for more than 2 days I changed the variables of the expansion of the number
@@ -21,4 +21,5 @@ I embellished it even better, packed it into an installer, and now I am writing 
 ------------------------------------------------------------------------------------------------------------------------------
 я опубликую файл rar что бы вам было проще разобраться в моей программе
 всем досвидания by Dzhamshuttt
-
+---------------------------------------------------------------------------------------------------
+#######################################################################################################################
